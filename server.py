@@ -78,23 +78,29 @@ class StreamingHttpServer(HTTPServer):
 
 class StreamingWebSocket(WebSocket):
     def opened(self):
-        self.send(JSMPEG_HEADER.pack(JSMPEG_MAGIC, WIDTH, HEIGHT), binary=True)
+        # self.send(JSMPEG_HEADER.pack(JSMPEG_MAGIC, WIDTH, HEIGHT), binary=True)
+        pass
 
 
 class BroadcastOutput(object):
     def __init__(self, camera):
         print('Spawning background conversion process')
+        # self.converter = Popen([
+        #     'avconv',
+        #     '-f', 'rawvideo',
+        #     '-pix_fmt', 'yuv420p',
+        #     '-s', '%dx%d' % camera.resolution,
+        #     '-r', str(float(camera.framerate)),
+        #     '-i', '-',
+        #     '-f', 'mpeg1video',
+        #     '-b', '800k',
+        #     '-r', str(float(camera.framerate)),
+        #     '-'],
+        #     stdin=PIPE, stdout=PIPE, stderr=io.open(os.devnull, 'wb'),
+        #     shell=False, close_fds=True)
         self.converter = Popen([
-            'avconv',
-            '-f', 'rawvideo',
-            '-pix_fmt', 'yuv420p',
-            '-s', '%dx%d' % camera.resolution,
-            '-r', str(float(camera.framerate)),
-            '-i', '-',
-            '-f', 'mpeg1video',
-            '-b', '800k',
-            '-r', str(float(camera.framerate)),
-            '-'],
+            'cat', '-'
+            ],
             stdin=PIPE, stdout=PIPE, stderr=io.open(os.devnull, 'wb'),
             shell=False, close_fds=True)
 
@@ -148,7 +154,7 @@ def main():
         output = BroadcastOutput(camera)
         broadcast_thread = BroadcastThread(output.converter, websocket_server)
         print('Starting recording')
-        camera.start_recording(output, 'yuv')
+        camera.start_recording(output, 'h264')
         try:
             print('Starting websockets thread')
             websocket_thread.start()
